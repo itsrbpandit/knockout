@@ -555,7 +555,7 @@ function test_misc(this: any) {
         $(el).datepicker("destroy");
     });
 
-    this.observableFactory = function (readonly: boolean = false): ko.ReadonlyObservable<number> {
+    this.observableFactory = function (readonly: boolean = false): ko.Subscribable<number> {
         if (readonly) {
             return ko.computed(() => 3);
         } else {
@@ -575,7 +575,10 @@ function test_subscribableRetainsType() {
     // and 'never' is not assignable to 'true'.
     type IsNotAny<T> = 0 extends (1 & T) ? false : true;
     const check: IsNotAny<typeof value> = true;
-    sub(10);
+
+    // Subscribable<T> also supports writing a value
+    let wsub: ko.Subscribable<number> = ko.observable(5);
+    wsub(10);
 }
 
 function test_customObservable() {

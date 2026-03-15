@@ -8,7 +8,6 @@ function testReadonlyObservable() {
     read(); // $ExpectType string
     read.subscribe(() => { });  // Can still subscribe
     read.peek(); // Can peek
-    read.extend({ notify: 'always' }); // Can extend
     read.getSubscriptionsCount(); // Can check subscriptions
 
     // @ts-expect-error - Can't write
@@ -17,10 +16,15 @@ function testReadonlyObservable() {
     read.valueHasMutated();
     // @ts-expect-error - Can't call notifySubscribers
     read.notifySubscribers("foo");
+    // @ts-expect-error - Can't extend
+    read.extend({ notify: 'always' });
 
     // Can cast back to writable
     const writeAgain = read as ko.Observable<string>;
     writeAgain("bar");
+
+    // @ts-expect-error - Can't assign to writable observable
+    const tryWritable: ko.Observable<string> = read;
 };
 
 function testReadonlyObservableArray() {
@@ -54,6 +58,16 @@ function testReadonlyObservableArray() {
     // Can cast back to writable
     const writeAgain = read as ko.ObservableArray<string>;
     writeAgain(["foo"]);
+
+    // @ts-expect-error - Can't assign to writable array
+    const tryWritable: ko.ObservableArray<string> = read;
+
+    // Can assign to ReadonlyObservable
+    const readObs: ko.ReadonlyObservable<string[]> = read;
+    readObs();
+    readObs.peek();
+    // @ts-expect-error
+    readObs([3]);
 }
 
 function testReadonlyComputed() {
@@ -114,11 +128,25 @@ function testComputedAsReadonlyObservable() {
     readOnly.subscribe(() => { });
     // @ts-expect-error
     readOnly(5);
+}
 
-    // Observable should also be assignable to ReadonlyObservable
+function testAsSubscribable() {
+    // See https://github.com/knockout/knockout/issues/2623
+    // Computed should be assignable to Subscribable (structural compatibility)
+    const comp = ko.computed(() => 42);
+    const sub: ko.Subscribable<number> = comp;
+    sub();
+    sub.subscribe(() => { });
+
+    // WritableComputed should be assignable to Subscribable
+    const wcomp = ko.computed({ read: () => 42, write: (x: number) => { } });
+    const sub2: ko.Subscribable<number> = wcomp;
+
+    // Observable should be assignable to Subscribable
     const obs = ko.observable(42);
-    const readOnly2: ko.ReadonlyObservable<number> = obs;
-    readOnly2();
-    // @ts-expect-error
-    readOnly2(5);
+    const sub3: ko.Subscribable<number> = obs;
+
+    // ObservableArray should be assignable to Subscribable
+    const arr = ko.observableArray([1, 2]);
+    const sub4: ko.Subscribable<number[]> = arr;
 }

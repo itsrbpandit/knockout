@@ -24,9 +24,6 @@ export interface ReadonlySubscribableFunctions<T = any> extends Function {
     subscribe<TTarget = void>(callback: SubscriptionCallback<T, TTarget>, callbackTarget?: TTarget, event?: "change"): Subscription;
     subscribe<X = any, TTarget = void>(callback: SubscriptionCallback<X, TTarget>, callbackTarget: TTarget, event: string): Subscription;
 
-    extend(requestedExtenders: ObservableExtenderOptions<T>): this;
-    extend<S extends Subscribable<T>>(requestedExtenders: ObservableExtenderOptions<T>): S;
-
     getSubscriptionsCount(event?: string): number;
 }
 
@@ -34,6 +31,9 @@ export interface SubscribableFunctions<T = any> extends ReadonlySubscribableFunc
     init<S extends Subscribable<any>>(instance: S): void;
 
     notifySubscribers(valueToWrite?: T, event?: string): void;
+
+    extend(requestedExtenders: ObservableExtenderOptions<T>): this;
+    extend<S extends Subscribable<T>>(requestedExtenders: ObservableExtenderOptions<T>): S;
 }
 
 export interface Subscribable<T = any> extends SubscribableFunctions<T> {
@@ -251,7 +251,7 @@ export type ComputedReadFunction<T = any, TTarget = void> = Subscribable<T> | Ob
 export type ComputedWriteFunction<T = any, TTarget = void> = (this: TTarget, val: T) => void;
 export type MaybeComputed<T = any> = T | Computed<T> | WritableComputed<T>;
 
-export interface ComputedFunctions<T = any> extends ReadonlySubscribableFunctions<T> {
+export interface ComputedFunctions<T = any> extends SubscribableFunctions<T> {
     // It's possible for a to be undefined, since the equalityComparer is run on the initial
     // computation with undefined as the first argument. This is user-relevant for deferred computeds.
     equalityComparer(a: T | undefined, b: T): boolean;
@@ -261,15 +261,13 @@ export interface ComputedFunctions<T = any> extends ReadonlySubscribableFunction
     getDependenciesCount(): number;
     getDependencies(): Subscribable[];
 }
-export interface WritableComputedFunctions<T = any> extends ComputedFunctions<T>, SubscribableFunctions<T> {
-}
 
 /** A standard computed observable, which is read-only */
 export interface Computed<T = any> extends ComputedFunctions<T> {
     (): T;
 }
 /** A writable computed observable, created with the "write" option */
-export interface WritableComputed<T = any> extends WritableComputedFunctions<T>, Computed<T> {
+export interface WritableComputed<T = any> extends Computed<T> {
     (value: T): this;
 }
 
@@ -295,7 +293,7 @@ export function computed<T = any, TTarget = any>(evaluator: ComputedReadFunction
 export function computed<T = any, TTarget = any>(evaluator: ComputedReadFunction<T, TTarget>, evaluatorTarget: TTarget, options: WritableComputedOptions<T, TTarget>): WritableComputed<T>;
 export function computed<T = any, TTarget = any>(evaluator: ComputedReadFunction<T, TTarget>, evaluatorTarget: TTarget, options: ComputedOptions<T, TTarget>): Computed<T>;
 export module computed {
-    export const fn: WritableComputedFunctions;
+    export const fn: ComputedFunctions;
 }
 
 export function pureComputed<T = any, TTarget = any>(options: WritableComputedOptions<T, TTarget>): WritablePureComputed<T>;
