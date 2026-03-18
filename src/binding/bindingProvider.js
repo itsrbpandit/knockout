@@ -69,7 +69,7 @@
         if (koTrustedTypesPolicy) {
             // new Function() doesn't accept TrustedScript in Chrome, so use eval instead. (https://issues.chromium.org/issues/40133092)
             // eval returns the result of the last expression, so wrap as a function expression.
-            return eval(koTrustedTypesPolicy['createScript']("(function($context,$element){" + functionBody + "})"));
+            return (0, eval)(koTrustedTypesPolicy['createScript']("(function($context,$element){" + functionBody + "})"));
         }
         return new Function("$context", "$element", functionBody);
     }

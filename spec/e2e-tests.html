@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Knockout E2E Tests</title>
+    <script src="spec/lib/jasmine-1.2.0/jasmine.js"></script>
+    <script src="spec/lib/jasmine-results.js"></script>
+</head>
+<body>
+    <script src="knockout.js"></script>
+    <script>
+    describe('Bindings', function() {
+        afterEach(function() {
+            ko.cleanNode(this.div);
+            document.body.removeChild(this.div);
+        });
+
+        it('Basic text binding', function() {
+            this.div = document.createElement('div');
+            this.div.setAttribute('data-bind', 'text: message');
+            document.body.appendChild(this.div);
+            ko.applyBindings({ message: 'hello' }, this.div);
+            expect(this.div.textContent).toBe('hello');
+        });
+
+        it('Computed binding expression', function() {
+            this.div = document.createElement('div');
+            this.div.setAttribute('data-bind', 'text: first() + " " + last()');
+            document.body.appendChild(this.div);
+            ko.applyBindings({ first: ko.observable('hello'), last: ko.observable('world') }, this.div);
+            expect(this.div.textContent).toBe('hello world');
+        });
+
+        it('foreach binding', function() {
+            this.div = document.createElement('div');
+            this.div.setAttribute('data-bind', 'foreach: items');
+            var span = document.createElement('span');
+            span.setAttribute('data-bind', 'text: $data');
+            this.div.appendChild(span);
+            document.body.appendChild(this.div);
+            ko.applyBindings({ items: ['a', 'b', 'c'] }, this.div);
+            expect(this.div.textContent).toBe('abc');
+        });
+
+        it('HTML binding with string', function() {
+            this.div = document.createElement('div');
+            this.div.setAttribute('data-bind', 'html: content');
+            document.body.appendChild(this.div);
+            ko.applyBindings({ content: '<b>bold</b>' }, this.div);
+            expect(this.div.innerHTML.toLowerCase()).toContain('<b>bold</b>');
+        });
+
+        it('Component registration and binding', function() {
+            ko.components.register('e2e-test-component', {
+                template: '<span>component content</span>'
+            });
+            this.div = document.createElement('div');
+            this.div.setAttribute('data-bind', 'component: "e2e-test-component"');
+            document.body.appendChild(this.div);
+            ko.applyBindings({}, this.div);
+            ko.components.unregister('e2e-test-component');
+        });
+    });
+
+    if (typeof trustedTypes !== 'undefined') {
+        describe('Trusted Types', function() {
+            it('HTML binding with TrustedHTML', function() {
+                var policy = trustedTypes.createPolicy('knockout-test', {
+                    createHTML: function(s) { return s; }
+                });
+                var div = document.createElement('div');
+                div.setAttribute('data-bind', 'html: content');
+                document.body.appendChild(div);
+                var trustedHtml = policy.createHTML('<b>bold</b>');
+                ko.applyBindings({ content: trustedHtml }, div);
+                expect(div.innerHTML.toLowerCase()).toContain('<b>bold</b>');
+                ko.cleanNode(div);
+                document.body.removeChild(div);
+            });
+        });
+    }
+
+    jasmine.getEnv().execute();
+    </script>
+</body>
+</html>

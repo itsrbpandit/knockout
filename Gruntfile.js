@@ -34,8 +34,8 @@ module.exports = function(grunt) {
         test: {
             puppeteer: 'spec/runner.puppeteer.js',
             node: 'spec/runner.node.js',
-            trustedtypes: 'spec/runner.trusted-types.js',
-            trustedtypesdebug: 'spec/runner.trusted-types.js build/output/knockout-latest.debug.js'
+            trustedtypes: 'spec/runner.e2e.js --trusted-types',
+            strictmode: 'spec/runner.e2e.js --strict',
         },
         testtypes: {
             global: "spec/types/global",
